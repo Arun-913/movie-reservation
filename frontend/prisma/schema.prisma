@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int @id @default(autoincrement())
+  username        String
+  email           String   @unique
+  password        String
+  created_at      DateTime @default(now())
+  tickets         Ticket[]
+}
+
+model Theater {
+  id              String @id @default(uuid())
+  name            String
+  location        String
+  created_at      DateTime @default(now())
+  seats           Seat[]
+  schedules       MovieSchedule[]
+  lockedSeat      LockedSeat[]    
+}
+
+model Movie {
+  id              String @id @default(uuid())
+  title           String
+  metadata        Json
+  genre           String?
+  duration        Int
+  release_date    DateTime?
+  end_date        DateTime?
+  created_at      DateTime    @default(now())
+  schedules       MovieSchedule[]
+}
+
+model MovieSchedule {
+  id              String @id @default(uuid())
+  movie_id        String
+  theater_id      String
+  show_time       DateTime
+  slot            Int
+  created_at      DateTime    @default(now())
+  movie           Movie       @relation(fields: [movie_id], references: [id])
+  theater         Theater     @relation(fields: [theater_id], references: [id])
+  tickets         Ticket[]
+  seats           Seat[]
+  lockedSeat      LockedSeat[]
+}
+
+model Seat {
+  id              String @id @default(uuid())
+  theater_id      String
+  schedule_id     String
+  row_number      Int
+  seat_number     Int
+  date            DateTime
+  created_at      DateTime    @default(now())
+  theater         Theater     @relation(fields: [theater_id], references: [id])
+  schedule        MovieSchedule        @relation(fields: [schedule_id], references: [id])
+  tickets         Ticket[]
+}
+
+model Ticket {
+  id                      String @id @default(uuid())
+  user_id                 Int
+  schedule_id             String
+  seat_id                 String
+  payment_status          String
+  payment_reference       String?
+  cancel                  String?
+  created_at              DateTime        @default(now())
+  user                    User            @relation(fields: [user_id], references: [id])
+  schedule                MovieSchedule   @relation(fields: [schedule_id], references: [id])
+  seat                    Seat            @relation(fields: [seat_id], references: [id])
+}
+
+model LockedSeat {
+  id                      String @id @default(uuid())
+  theater_id              String
+  schedule_id             String
+  row_number              Int
+  seat_number             Int
+  deleteAt                DateTime
+  theater                 Theater         @relation(fields: [theater_id], references: [id])
+  schedule                MovieSchedule   @relation(fields: [schedule_id], references: [id])
+}
