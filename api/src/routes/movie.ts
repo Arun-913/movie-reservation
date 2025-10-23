@@ -54,3 +54,18 @@ movieRouter.get('/title/:title', async(req, res)=>{
         return res.status(400).json(err);
     }
 })
+
+movieRouter.get('/id/:id', async(req, res)=>{
+    const id = req.params.id;
+    try {
+        const response = await prismaClient.movie.findFirst({
+            where: {
+                id
+            }
+        });
+        return res.json(response);
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json(err);
+    }
+})

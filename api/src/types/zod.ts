@@ -1,5 +1,4 @@
-import { string, z } from "zod";
-import { theaterRouter } from "../routes/theater";
+import { z } from "zod";
 
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 type Literal = z.infer<typeof literalSchema>;
@@ -33,7 +32,7 @@ export const SeatPostZodSchema = z.object({
     theater_id: z.string(),
     schedule_id: z.string(),
     row_number: z.number().gte(1).lte(10),
-    seat_number: z.number().gte(1).lte(20),
+    seat_number: z.number().gte(1).lte(10),
     date: z.date(),
 })
 
@@ -48,7 +47,7 @@ export const SeatLockPostZodSchema = z.object({
     theater_id: z.string(),
     schedule_id: z.string(),
     row_number: z.number().gte(1).lte(10),
-    seat_number: z.number().gte(1).lte(20),
+    seat_number: z.number().gte(1).lte(10),
     date: z.date(),
 });
 
@@ -61,4 +60,21 @@ export const SeatConfirmationPostZodSchema = z.object({
 export const SeatCancelDeleteZodSchema = z.object({
     seat_id: z.string(), 
     ticket_id: z.string()
+})
+
+export const GetScheduledIdZodSchema = z.object({
+    movie_id: z.string(),
+    theater_id: z.string(),
+    slot: z.number().gte(1).lte(4)
+})
+
+export const SignupSchema = z.object({
+    username: z.string().min(3),
+    email: z.string().email(),
+    password: z.string().min(8)
+})
+
+export const SigninSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8)
 })

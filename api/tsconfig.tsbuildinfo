@@ -1,0 +1,1 @@
+{"root":["./src/RedisManager.ts","./src/config.ts","./src/db.ts","./src/index.ts","./src/middleware.ts","./src/routes/movie.ts","./src/routes/movieSchedule.ts","./src/routes/orderId.ts","./src/routes/seat.ts","./src/routes/theater.ts","./src/routes/user.ts","./src/types/index.ts","./src/types/zod.ts"],"errors":true,"version":"5.8.3"}

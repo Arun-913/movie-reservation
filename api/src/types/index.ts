@@ -31,12 +31,14 @@ export type MessageToEngine = {
 
 export type MessageFromEngine = {
     type: string,
+    status: boolean,
     payload: {
         id: string,
         receipt: string
     }
 } | {
     type: string,
+    status: boolean,
     payload: {
         message: string,
         booking_status: string

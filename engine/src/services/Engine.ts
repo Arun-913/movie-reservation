@@ -1,7 +1,7 @@
 import { error } from "console";
 import { prismaClient } from "../db";
 import { RedisManager } from "../RedisManager";
-import { BOOK_SEAT, CANCEL_TICKET, LockSeatFunction, MessageFromApi, PAYMENT_CONFIRM, SEAT_LOCK } from "../types/type";
+import { BOOK_SEAT, CANCEL_TICKET, LockSeatFunction, MessageFromApi, PAYMENT_CONFIRM, SEAT_LOCK } from "../types/index";
 
 export class Engine {
 

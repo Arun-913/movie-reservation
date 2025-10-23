@@ -1,5 +1,5 @@
 import { RedisClientType, createClient } from "redis";
-import { MessageToApi } from "./types/type";
+import { MessageToApi } from "./types/index";
 
 export class RedisManager {
     private client: RedisClientType;

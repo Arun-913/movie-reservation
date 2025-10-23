@@ -4,6 +4,7 @@ import { RedisManager } from '../RedisManager';
 import { SeatAvailabeGetZodSchema, SeatCancelDeleteZodSchema, SeatConfirmationPostZodSchema, SeatLockPostZodSchema, SeatPostZodSchema } from '../types/zod';
 import { RedisSearchLanguages } from 'redis';
 import { BOOK_SEAT, CANCEL_TICKET, SEAT_LOCK } from '../types';
+import { authMiddleware, CustomRequest } from '../middleware';
 
 export const seatRouter = Router();
 
@@ -81,7 +82,7 @@ seatRouter.get('/available', async(req, res)=>{
         })
 
         const availableSeats = [];
-        for(let i=0; i<200; i++){
+        for(let i=1; i<=100; i++){
             if(!notAvailableSeats.has(i)){
                 availableSeats.push(i);
             }
@@ -94,69 +95,104 @@ seatRouter.get('/available', async(req, res)=>{
     }
 })
 
-seatRouter.post('/book', async(req, res)=>{
-    const { user_id, theater_id, schedule_id, row_number, seat_number } = req.body;
+seatRouter.post('/book', authMiddleware, async(req: CustomRequest, res)=>{
+    const { theater_id, schedule_id, row_number, seat_number } = req.body;
     const date = typeof req.body.date !== undefined ? new Date(req.body.date) : req.body.date;
 
-    try {
-        SeatLockPostZodSchema.parse({ user_id, theater_id, schedule_id, row_number, seat_number, date });
+    const parsedData = SeatLockPostZodSchema.safeParse({ user_id: req.id, theater_id, schedule_id, row_number, seat_number, date });
 
-        const response = await RedisManager.getInstance().sendAndAwait({
-            type: SEAT_LOCK,
-            data: {
-                user_id,
-                theater_id,
-                schedule_id,
-                row_number,
-                seat_number,
-                date
-            }
+    if(!parsedData.success){
+        return res.status(411).json({
+            message: "Incorrect inputs"
         });
-
-        return res.json(response.payload);
-    } catch (err) {
-        console.log(err);
-        return res.status(400).json(err);
     }
+
+    const response = await RedisManager.getInstance().sendAndAwait({
+        type: SEAT_LOCK,
+        data: {
+            user_id: parsedData.data.user_id,
+            theater_id,
+            schedule_id,
+            row_number,
+            seat_number,
+            date
+        }
+    });
+
+    if(!response.status){
+        return res.status(409).json({
+            message: "Error occurred during booking"
+        })
+    }
+
+    return res.json(response.payload);
 })
 
-seatRouter.post('/payment-confirmation', async(req, res)=>{
+seatRouter.post('/payment-confirmation', authMiddleware, async(req: CustomRequest, res)=>{
     const { user_id, schedule_id, locketSeat_id } = req.body;
-    try {
-        SeatConfirmationPostZodSchema.parse({ user_id, schedule_id, locketSeat_id });
-        
-        const response = await RedisManager.getInstance().sendAndAwait({
-            type: BOOK_SEAT,
-            data: {
-                user_id,
-                schedule_id, 
-                locketSeat_id
-            }
-        });
 
-        return res.json(response.payload);
-    } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+    const parsedData = SeatConfirmationPostZodSchema.safeParse({ user_id: req.id, schedule_id, locketSeat_id });
+
+    if(!parsedData.success){
+        return res.status(411).json({
+            message: "Incorrect inputs"
+        });
     }
+
+    const response = await RedisManager.getInstance().sendAndAwait({
+        type: BOOK_SEAT,
+        data: {
+            user_id,
+            schedule_id, 
+            locketSeat_id
+        }
+    });
+
+    if(!response.status){
+        return res.status(409).json({
+            message: "Error occurred during booking"
+        })
+    }
+
+    return res.json(response.payload);
 })
 
-seatRouter.delete('/cancel', async(req, res)=>{
-    const { seat_id, ticket_id } = req.body;
-    try {
-        SeatCancelDeleteZodSchema.parse({ seat_id, ticket_id });
-        
-        const response = await RedisManager.getInstance().sendAndAwait({
-            type: CANCEL_TICKET,
-            data: {
-                seat_id, 
-                ticket_id
-            }
-        });
+seatRouter.delete('/cancel', authMiddleware, async(req: CustomRequest, res)=>{
+    const body = req.body;
+    const parsedData = SeatCancelDeleteZodSchema.safeParse(body);
 
-        return res.json(response.payload);
-    } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+    if(!parsedData.success){
+        return res.status(411).json({
+            message: "Incorrect inputs"
+        });
     }
+
+    const isValidUser = prismaClient.ticket.findFirst({
+        where: {
+            id: parsedData.data.seat_id,
+            user_id: Number(req.id)
+        }
+    });
+
+    if(!isValidUser){
+        return res.status(403).json({
+            message: "Not a valid user to cancel ticket"
+        });
+    }
+
+    const response = await RedisManager.getInstance().sendAndAwait({
+        type: CANCEL_TICKET,
+        data: {
+            seat_id: parsedData.data.seat_id, 
+            ticket_id: parsedData.data.ticket_id
+        }
+    });
+
+    if(!response.status){
+        return res.status(409).json({
+            message: "Error occurred during cancellation"
+        })
+    }
+
+    return res.json(response.payload);
 })

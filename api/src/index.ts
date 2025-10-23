@@ -5,6 +5,9 @@ import { theaterRouter } from './routes/theater';
 import { movieRouter } from './routes/movie';
 import { seatRouter } from './routes/seat';
 import { PrismaClient } from '@prisma/client';
+import { movieSchedule } from './routes/movieSchedule';
+import { orderRouter } from './routes/orderId';
+import { userRouter } from './routes/user';
 
 const app = express();
 
@@ -14,6 +17,9 @@ app.use(express.json());
 app.use('/api/theater', theaterRouter);
 app.use('/api/movie', movieRouter);
 app.use('/api/seat', seatRouter);
+app.use('/api/movie-schedule', movieSchedule);
+app.use('/api/order', orderRouter);
+app.use('/api/user', userRouter)
 
 app.get('/', (req, res)=>{
     return res.json({message: "healthy"});
